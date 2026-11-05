@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Prominence Creative
 
 Marketing site and small admin panel for Prominence Creative. Next.js (App Router), TypeScript,
@@ -160,3 +161,6 @@ node scripts/audit.mjs http://localhost:3000
   Organization JSON-LD has no `logo`.
 - Client names in `src/lib/content.ts` (`CLIENTS`) and the hero line are placeholders pending
   owner confirmation. The team section is intentionally omitted.
+=======
+# prominence-creative
+>>>>>>> 61ddee962d66cc73560dce91550d615feb1cf6d6
