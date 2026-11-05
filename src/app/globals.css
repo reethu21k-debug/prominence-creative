@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-bg: #090909;
+  --color-bg-2: #111111;
+  --color-bg-3: #151515;
+  --color-fg: #ffffff;
+  --color-fg-2: #a1a1a1;
+  --color-muted: #707070;
+  --color-line: #292929;
+  --font-display: var(--font-space), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-cormorant), Georgia, serif;
+}
+
+html { background: #090909; }
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+::selection { background: #fff; color: #090909; }
+:focus-visible { outline: 1px solid #fff; outline-offset: 4px; }
+
+@utility container-x {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 1440px;
+  padding-inline: 1.5rem;
+  @media (min-width: 768px) { padding-inline: 2.5rem; }
+}
+@utility micro {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+@utility h-display {
+  font-family: var(--font-display);
+  font-weight: 500;
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+  overflow-wrap: break-word;
+}
+
+@keyframes page-in { from { opacity: 0; } to { opacity: 1; } }
+.page-enter { animation: page-in 0.5s ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
