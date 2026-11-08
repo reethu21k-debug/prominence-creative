@@ -46,7 +46,6 @@ const CARDS: { label: string; from: string; to: string; src?: string }[] = [
 ];
 
 const HEADING = "h-display text-balance text-fg text-[clamp(2.2rem,min(5.6vw,10.5svh),5.5rem)]";
-const SHORT = "[@media(max-height:560px)]"; // short landscape phones
 
 const N = STAGES.length;
 const C = CARDS.length;
@@ -114,8 +113,9 @@ function keyframes(i: number, mode: Mode) {
 }
 
 // Card width is capped by width and height so it never dominates a short or narrow screen.
+// The portrait minimum is 64px so the longest label word ("Explainer") still fits.
 const CARD_W: Record<Mode, string> = {
-  portrait: "clamp(56px, min(19vw, 13svh), 150px)",
+  portrait: "clamp(64px, min(19vw, 13svh), 150px)",
   wide: "clamp(64px, min(13vw, 24svh), 170px)",
 };
 
@@ -148,8 +148,12 @@ function Card({ i, mode, progress }: { i: number; mode: Mode; progress: MotionVa
           // eslint-disable-next-line @next/next/no-img-element
           <img src={card.src} alt="" className="h-full w-full object-cover" loading="lazy" />
         )}
-        <span className="micro absolute inset-x-2 bottom-2 hidden !text-white/85 leading-tight sm:block">
-          {card.label}
+
+        {/* Label: visible at every size. Tiny type on phones, a soft fade keeps it readable. */}
+        <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent px-1.5 pb-1.5 pt-7 sm:px-2 sm:pb-2">
+          <span className="micro block text-balance leading-[1.15] !text-white/90 !text-[0.5625rem] !tracking-[0.06em] sm:!text-[0.6875rem] sm:!tracking-[0.2em]">
+            {card.label}
+          </span>
         </span>
       </div>
     </motion.div>
@@ -190,15 +194,11 @@ function Word({
       }`}
     >
       <h2 className={HEADING}>{STAGES[i].title}</h2>
-      <p
-        className={`mx-auto mt-4 max-w-[19rem] text-base leading-relaxed text-fg-2 sm:max-w-md md:mt-7 md:text-lg ${SHORT}:mt-3`}
-      >
+      <p className="mx-auto mt-4 max-w-[19rem] text-base leading-relaxed text-fg-2 sm:max-w-md md:mt-7 md:text-lg [@media(max-height:560px)]:mt-3">
         {STAGES[i].body}
       </p>
       {last && (
-        <div
-          className={`mt-7 flex w-full max-w-[16rem] flex-col items-stretch gap-3 sm:max-w-none sm:flex-row sm:justify-center md:mt-8 ${SHORT}:mt-4`}
-        >
+        <div className="mt-7 flex w-full max-w-[16rem] flex-col items-stretch gap-3 sm:max-w-none sm:flex-row sm:justify-center md:mt-8 [@media(max-height:560px)]:mt-4">
           <Button href="/work">Explore our work</Button>
           <Button href="/contact" variant="outline">Start a project ↗</Button>
         </div>
@@ -230,7 +230,7 @@ export default function Hero() {
         <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-fg-2 md:mt-8 md:text-lg">
           {STAGES.map((s) => s.title).join(", ")}.
         </p>
-        <div className="mt-8 flex w-full max-w-[16rem] flex-col gap-3 sm:max-w-none sm:w-auto sm:flex-row">
+        <div className="mt-8 flex w-full max-w-[16rem] flex-col gap-3 sm:w-auto sm:max-w-none sm:flex-row">
           <Button href="/work">Explore our work</Button>
           <Button href="/contact" variant="outline">Start a project ↗</Button>
         </div>
@@ -253,9 +253,7 @@ export default function Hero() {
         ))}
 
         {/* Top label: hidden on short landscape screens, where it would collide with the headline */}
-        <p
-          className={`micro absolute inset-x-0 top-20 z-20 px-6 text-center !text-fg-2 sm:top-24 md:top-28 ${SHORT}:hidden`}
-        >
+        <p className="micro absolute inset-x-0 top-20 z-20 px-6 text-center !text-fg-2 sm:top-24 md:top-28 [@media(max-height:560px)]:hidden">
           Independent creative production studio
         </p>
 
@@ -263,7 +261,7 @@ export default function Hero() {
         <div className="absolute inset-x-0 bottom-0 z-20">
           <motion.div
             style={{ opacity: hintOpacity }}
-            className={`mb-4 flex flex-col items-center gap-3 ${SHORT}:hidden`}
+            className="mb-4 flex flex-col items-center gap-3 [@media(max-height:560px)]:hidden"
           >
             <span className="micro">Scroll</span>
             <span className="relative block h-10 w-px overflow-hidden bg-black/15">
