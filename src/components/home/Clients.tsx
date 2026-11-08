@@ -11,14 +11,19 @@ const items = [
 
 export default function Clients() {
   return (
-    <section className="bg-bg py-24 md:py-32">
+    <section className="bg-bg py-20 md:py-32">
       <div className="container-x">
         <Reveal>
           <SectionLabel>05 / Trusted by</SectionLabel>
-          <h2 className="h-display mt-8 text-[clamp(1.75rem,3.6vw,3.25rem)]">Built through creative collaboration.</h2>
+          <h2 className="h-display mt-6 text-balance text-[clamp(1.875rem,5.2vw,3.25rem)] md:mt-8">
+            Built through creative collaboration.
+          </h2>
         </Reveal>
-        <div className="mt-16">
-          <ClientsAccordion items={items} defaultIndex={0} />
+
+        <div className="mt-10 md:mt-16">
+          <ClientsAccordion items={items} defaultIndex={0} accentColor="#ffd23f" overlayColor="#0a0a0a" />
+          <p className="micro mt-5 text-right sm:hidden">Tap a client to open</p>
+          <p className="micro mt-5 hidden text-right sm:block">Hover a client to open</p>
         </div>
       </div>
     </section>

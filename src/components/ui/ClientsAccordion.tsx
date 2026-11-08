@@ -8,7 +8,10 @@ export type AccordionItem = { name: string; image: string; alt?: string };
 type Props = {
   items: AccordionItem[];
   defaultIndex?: number;
+  /** Share of the row taken by the open panel (horizontal layout). */
   expandRatio?: number;
+  /** Same, for the stacked mobile layout. Higher = collapsed strips stay at their minimum height. */
+  verticalExpandRatio?: number;
   height?: number;
   gap?: number;
   radius?: number;
@@ -17,15 +20,22 @@ type Props = {
   tilt?: number;
   stagger?: number;
   grayscale?: boolean;
+  background?: string;
   overlayColor?: string;
   accentColor?: string;
   textColor?: string;
 };
 
+// Stacked layout applies below Tailwind's `sm` breakpoint (640px). Keep these two in sync.
+const VERTICAL_QUERY = '(max-width: 639.98px)';
+// Height of a collapsed strip in the stacked layout. Keep in sync with `max-sm:min-h-[84px]` below.
+const COLLAPSED_V = 84;
+
 export default function ClientsAccordion({
   items,
   defaultIndex = 0,
   expandRatio = 0.52,
+  verticalExpandRatio = 0.7,
   height = 460,
   gap = 10,
   radius = 16,
@@ -34,6 +44,7 @@ export default function ClientsAccordion({
   tilt = 8,
   stagger = 0.06,
   grayscale = true,
+  background = '#000000',
   overlayColor = '#060010',
   accentColor = '#ffffff',
   textColor = '#ffffff',
@@ -58,8 +69,9 @@ export default function ClientsAccordion({
       if (!panels.length) return;
 
       const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const vertical = window.matchMedia('(max-width: 520px)').matches;
-      const r = Math.min(Math.max(expandRatio, 0.2), 0.9);
+      const vertical = window.matchMedia(VERTICAL_QUERY).matches;
+      const ratio = vertical ? verticalExpandRatio : expandRatio;
+      const r = Math.min(Math.max(ratio, 0.2), 0.9);
       const grow = count > 1 ? (r * (count - 1)) / (1 - r) : 1;
       const dur = animate && !reduced ? duration : 0;
 
@@ -102,6 +114,10 @@ export default function ClientsAccordion({
         if (bar && text) {
           if (on) {
             tl.to([bar, text], { opacity: 1, x: 0, duration: dur, ease: 'power3.out', stagger: reduced ? 0 : stagger }, 0);
+          } else if (vertical) {
+            // Touch has no hover, so keep every name readable on the collapsed strips.
+            tl.to(bar, { opacity: 0.35, x: 0, duration: dur, ease: 'power3.out' }, 0);
+            tl.to(text, { opacity: 0.9, x: 0, duration: dur, ease: 'power3.out' }, 0);
           } else {
             tl.to([bar, text], { opacity: 0, x: -14, duration: dur * 0.6, ease: 'power3.out' }, 0);
           }
@@ -110,7 +126,7 @@ export default function ClientsAccordion({
 
       tlRef.current = tl;
     },
-    [active, count, expandRatio, duration, tilt, parallax, grayscale, stagger]
+    [active, count, expandRatio, verticalExpandRatio, duration, tilt, parallax, grayscale, stagger]
   );
 
   // Measure the container so the images are sized to the expanded panel
@@ -119,11 +135,16 @@ export default function ClientsAccordion({
     if (!el) return;
 
     const measure = () => {
-      const vertical = window.matchMedia('(max-width: 520px)').matches;
+      const vertical = window.matchMedia(VERTICAL_QUERY).matches;
       const rect = el.getBoundingClientRect();
-      const total = vertical ? rect.height : rect.width;
-      const usable = Math.max(total - gap * (count - 1), 120);
-      const size = Math.max(140, usable * Math.min(Math.max(expandRatio, 0.2), 0.9) * 1.22);
+      let size: number;
+      if (vertical) {
+        // Open panel height = list height minus the collapsed strips and gaps.
+        size = Math.max(140, rect.height - (count - 1) * (COLLAPSED_V + gap));
+      } else {
+        const usable = Math.max(rect.width - gap * (count - 1), 120);
+        size = Math.max(140, usable * Math.min(Math.max(expandRatio, 0.2), 0.9) * 1.22);
+      }
       mediaSize.current = size;
       el.style.setProperty('--ag-media-size', `${size}px`);
       applyLayout(!firstRun.current);
@@ -156,8 +177,15 @@ export default function ClientsAccordion({
     <ul
       ref={rootRef}
       aria-label="Our clients"
-      className="flex w-full flex-row [perspective:1400px] max-[520px]:!h-auto max-[520px]:flex-col max-[520px]:[perspective:none]"
-      style={{ gap, height }}
+      // Mobile: a definite height (--ag-vheight) is what lets flex-grow actually expand the open panel.
+      className="flex w-full flex-row [perspective:1400px] max-sm:!h-[var(--ag-vheight)] max-sm:flex-col max-sm:[perspective:none]"
+      style={
+        {
+          gap,
+          height: `min(${height}px, 72svh)`,
+          ['--ag-vheight' as string]: `calc(${count - 1} * (${COLLAPSED_V}px + ${gap}px) + clamp(210px, 38svh, 320px))`,
+        } as React.CSSProperties
+      }
     >
       {items.map((item, i) => (
         <li
@@ -170,14 +198,14 @@ export default function ClientsAccordion({
           onFocus={() => setActive(i)}
           onClick={() => setActive(i)}
           onKeyDown={(e) => onKeyDown(i, e)}
-          className="relative min-h-0 min-w-0 flex-[1_1_0] cursor-pointer overflow-hidden bg-black outline-none [transform-origin:center] [transform-style:preserve-3d] [box-shadow:0_10px_30px_-18px_rgba(0,0,0,0.8)] focus-visible:ring-2 focus-visible:ring-white max-[520px]:min-h-[84px] max-[520px]:!transform-none"
-          style={{ borderRadius: radius, willChange: 'flex-grow, transform' }}
+          className="relative min-h-0 min-w-0 flex-[1_1_0] cursor-pointer overflow-hidden outline-none [transform-origin:center] [transform-style:preserve-3d] [box-shadow:0_10px_30px_-18px_rgba(0,0,0,0.8)] focus-visible:ring-2 focus-visible:ring-white max-sm:min-h-[84px] max-sm:!transform-none"
+          style={{ borderRadius: radius, background, willChange: 'flex-grow, transform' }}
         >
           <span className="absolute inset-0 overflow-hidden [border-radius:inherit]">
             <span
               ref={(el) => { mediaRefs.current[i] = el; }}
-              className="absolute left-1/2 top-1/2 h-full w-[var(--ag-media-size,320px)] bg-black [filter:grayscale(var(--ag-gray,1))] max-[520px]:h-[var(--ag-media-size,320px)] max-[520px]:w-full"
-              style={{ willChange: 'transform, filter' }}
+              className="absolute left-1/2 top-1/2 h-full w-[var(--ag-media-size,320px)] [filter:grayscale(var(--ag-gray,1))] max-sm:h-[var(--ag-media-size,320px)] max-sm:w-full"
+              style={{ background, willChange: 'transform, filter' }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
