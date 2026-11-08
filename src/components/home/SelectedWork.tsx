@@ -38,7 +38,7 @@ export default async function SelectedWork() {
         )}
 
         <Reveal className="mt-20">
-          <Link href="/work" className="micro !text-white border-b border-white/40 pb-2 transition-colors hover:border-white">View all work ↗</Link>
+          <Link href="/work" className="micro !text-fg border-b border-black/40 pb-2 transition-colors hover:border-black">View all work ↗</Link>
         </Reveal>
       </div>
     </section>

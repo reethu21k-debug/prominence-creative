@@ -6,15 +6,15 @@ import { X } from "lucide-react";
 // WebGL only works in the browser, so skip server rendering for it.
 const FlexCarousel = dynamic(() => import("./FlexCarousel"), { ssr: false }) as unknown as React.ComponentType<Record<string, unknown>>;
 
-// Files live in /public/media (renamed to simple names).
+// YouTube Shorts. `id` is the part after /shorts/ in the link.
 const VIDEOS = [
-  { video: "/media/social-media-video.mp4", title: "Social media video editing", subtitle: "Social Content" },
-  { video: "/media/ai-model-video.mp4", title: "Realistic AI Model + Video editing", subtitle: "AI Video" },
-  { video: "/media/meta-ads.mp4", title: "Meta Ads", subtitle: "Ad Creatives" },
-  { video: "/media/product-shoot.mp4", title: "Product shoot & editing", subtitle: "Product Shoot" },
+  { id: "gmoS8F4Gupw", title: "Social media video editing", subtitle: "Social Content" },
+  { id: "LRnrDILSU5M", title: "Realistic AI Model + Video editing", subtitle: "AI Video" },
+  { id: "NoPpzyPdz6o", title: "Meta Ads", subtitle: "Ad Creatives" },
+  { id: "bl5b6aCZzxo", title: "Product shoot & editing", subtitle: "Product Shoot" },
 ];
 
-type Item = { src: string; alt: string; title: string; subtitle: string; video: string };
+type Item = { src: string; alt: string; title: string; subtitle: string; id: string };
 
 // Carousel height and card size per screen size, so all 4 videos fit.
 function useLayout() {
@@ -32,50 +32,55 @@ function useLayout() {
 
 function canvasToUrl(canvas: HTMLCanvasElement): Promise<string> {
   return new Promise((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(URL.createObjectURL(b)) : reject(new Error("No image"))), "image/jpeg", 0.85)
+    canvas.toBlob((b) => (b ? resolve(URL.createObjectURL(b)) : reject(new Error("No image"))), "image/jpeg", 0.9)
   );
 }
 
-// Grabs one frame from a video. Gives up after 10 seconds so one bad file never blocks the rest.
-function makePoster(videoSrc: string): Promise<string> {
+function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    const v = document.createElement("video");
-    let done = false;
-    const finish = (fn: () => void) => {
-      if (done) return;
-      done = true;
-      clearTimeout(timer);
-      v.removeAttribute("src");
-      v.load();
-      fn();
-    };
-    const timer = setTimeout(() => finish(() => reject(new Error("Timed out"))), 10000);
-
-    v.muted = true;
-    v.playsInline = true;
-    v.preload = "metadata";
-    v.src = videoSrc;
-    v.addEventListener("error", () => finish(() => reject(new Error("Cannot load file"))), { once: true });
-    v.addEventListener("loadedmetadata", () => {
-      v.addEventListener("seeked", () => {
-        const w = v.videoWidth, h = v.videoHeight;
-        if (!w || !h) return finish(() => reject(new Error("No video size")));
-        const scale = Math.min(1, 1280 / Math.max(w, h));
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.max(1, Math.round(w * scale));
-        canvas.height = Math.max(1, Math.round(h * scale));
-        canvas.getContext("2d")?.drawImage(v, 0, 0, canvas.width, canvas.height);
-        canvasToUrl(canvas).then(
-          (url) => finish(() => resolve(url)),
-          (e) => finish(() => reject(e))
-        );
-      }, { once: true });
-      v.currentTime = Math.min(1, (v.duration || 2) / 4); // frame at ~1 second
-    }, { once: true });
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Cannot load image"));
+    img.src = src;
   });
 }
 
-// Dark card with the title, used when a frame cannot be grabbed.
+// YouTube serves a 16:9 thumbnail with the vertical Short pillarboxed in the middle.
+// Crop the centre 9:16 slice so the card shows only the video frame.
+// Gives up after 10 seconds so one bad thumbnail never blocks the rest.
+async function makePoster(id: string): Promise<string> {
+  const work = async () => {
+    const sources = [
+      `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`,
+      `https://i.ytimg.com/vi/${id}/sddefault.jpg`,
+      `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+    ];
+    for (const src of sources) {
+      try {
+        const img = await loadImage(src);
+        if (img.naturalWidth < 300) continue; // YouTube's tiny "no image" placeholder
+        const h = img.naturalHeight;
+        const cropW = Math.round((h * 9) / 16);
+        const sx = Math.max(0, Math.round((img.naturalWidth - cropW) / 2));
+        const canvas = document.createElement("canvas");
+        canvas.width = cropW;
+        canvas.height = h;
+        canvas.getContext("2d")?.drawImage(img, sx, 0, cropW, h, 0, 0, cropW, h);
+        return await canvasToUrl(canvas);
+      } catch {
+        /* try the next size */
+      }
+    }
+    throw new Error("No thumbnail");
+  };
+  return Promise.race([
+    work(),
+    new Promise<string>((_, reject) => setTimeout(() => reject(new Error("Timed out")), 10000)),
+  ]);
+}
+
+// Light card with the title, used when a thumbnail cannot be grabbed.
 function makeFallback(title: string): Promise<string> {
   const canvas = document.createElement("canvas");
   canvas.width = 720;
@@ -83,12 +88,12 @@ function makeFallback(title: string): Promise<string> {
   const ctx = canvas.getContext("2d");
   if (ctx) {
     const g = ctx.createLinearGradient(0, 0, 720, 1280);
-    g.addColorStop(0, "#1c1c1c");
-    g.addColorStop(1, "#0a0a0a");
+    g.addColorStop(0, "#f5f5f4");
+    g.addColorStop(1, "#e6e6e4");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, 720, 1280);
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "600 52px sans-serif";
+    ctx.fillStyle = "#0a0a0a";
+    ctx.font = "500 56px 'Inter Tight', Inter, sans-serif";
     ctx.textAlign = "center";
     const words = title.split(" ");
     let line = "";
@@ -98,7 +103,7 @@ function makeFallback(title: string): Promise<string> {
       if (ctx.measureText(test).width > 600 && line) {
         ctx.fillText(line, 360, y);
         line = word;
-        y += 66;
+        y += 70;
       } else line = test;
     }
     ctx.fillText(line, 360, y);
@@ -135,8 +140,24 @@ function Lightbox({ item, onClose }: { item: Item; onClose: () => void }) {
         <X size={18} aria-hidden="true" />
       </button>
       <div className="flex max-h-full flex-col items-center" onClick={(e) => e.stopPropagation()}>
-        <video src={item.video} controls autoPlay playsInline className="max-h-[82vh] max-w-full bg-black" />
-        <p className="mt-4 font-display text-base tracking-tight">{item.title}</p>
+        {/* Vertical 9:16 player, as tall as fits the screen */}
+        <iframe
+          src={`https://www.youtube.com/embed/${item.id}?autoplay=1&mute=1&loop=1&playlist=${item.id}&playsinline=1&rel=0&modestbranding=1&origin=${encodeURIComponent(window.location.origin)}`}
+          title={item.title}
+          referrerPolicy="strict-origin-when-cross-origin"
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allowFullScreen
+          className="aspect-[9/16] w-[min(92vw,calc(82vh*9/16))] bg-black"
+        />
+        <p className="mt-4 font-display text-lg font-medium tracking-[-0.03em] text-white">{item.title}</p>
+        <a
+          href={`https://www.youtube.com/shorts/${item.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="micro mt-2 !text-white/70 transition-colors hover:!text-white"
+        >
+          Not playing? Watch on YouTube ↗
+        </a>
       </div>
     </div>
   );
@@ -156,16 +177,16 @@ export default function WorkVideos() {
       const results = await Promise.all(
         VIDEOS.map(async (v) => {
           try {
-            return { src: await makePoster(v.video), ok: true };
+            return { src: await makePoster(v.id), ok: true };
           } catch (e) {
-            console.warn(`[WorkVideos] ${v.video}:`, (e as Error).message);
+            console.warn(`[WorkVideos] ${v.id}:`, (e as Error).message);
             return { src: await makeFallback(v.title), ok: false };
           }
         })
       );
       results.forEach((r) => urls.push(r.src));
       if (cancelled) return;
-      setFailed(VIDEOS.filter((_, i) => !results[i].ok).map((v) => v.video));
+      setFailed(VIDEOS.filter((_, i) => !results[i].ok).map((v) => v.id));
       setItems(VIDEOS.map((v, i) => ({ src: results[i].src, alt: v.title, ...v })));
     })();
 
@@ -205,7 +226,7 @@ export default function WorkVideos() {
       <p className="micro mt-6 text-center">Drag or swipe to explore · Tap the centre video to play</p>
       {failed.length > 0 && (
         <p className="mt-3 text-center text-xs text-muted">
-          Could not read: {failed.join(", ")}. Check the file names in public/media.
+          Could not load thumbnails for: {failed.join(", ")}. The videos still play when opened.
         </p>
       )}
       {open && <Lightbox item={open} onClose={() => setOpen(null)} />}

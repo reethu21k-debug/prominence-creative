@@ -1,6 +1,13 @@
 import Reveal from "@/components/ui/Reveal";
 import SectionLabel from "@/components/ui/SectionLabel";
-import { CLIENTS } from "@/lib/content";
+import ClientsAccordion from "@/components/ui/ClientsAccordion";
+
+const items = [
+  { name: "EDGEX Learning", image: "/edgex.png" },
+  { name: "Ira Holidays", image: "/ira-holidays.png" },
+  { name: "Modern Indian Interior Designers", image: "/indian-interior-designers.png" },
+  { name: "Star Agile", image: "/star-agile.png" },
+];
 
 export default function Clients() {
   return (
@@ -10,14 +17,9 @@ export default function Clients() {
           <SectionLabel>05 / Trusted by</SectionLabel>
           <h2 className="h-display mt-8 text-[clamp(1.75rem,3.6vw,3.25rem)]">Built through creative collaboration.</h2>
         </Reveal>
-        {/* Shown as text wordmarks until approved logos are supplied. */}
-        <ul className="mt-16 grid border-t border-line sm:grid-cols-2 lg:grid-cols-4">
-          {CLIENTS.map((c) => (
-            <li key={c} className="flex min-h-32 items-center border-b border-line py-8 pr-6 font-display text-lg tracking-tight text-fg-2 lg:border-b-0 lg:border-r lg:px-8 lg:first:pl-0 lg:last:border-r-0">
-              {c}
-            </li>
-          ))}
-        </ul>
+        <div className="mt-16">
+          <ClientsAccordion items={items} defaultIndex={0} />
+        </div>
       </div>
     </section>
   );

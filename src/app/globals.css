@@ -1,19 +1,20 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-bg: #090909;
-  --color-bg-2: #111111;
-  --color-bg-3: #151515;
-  --color-fg: #ffffff;
-  --color-fg-2: #a1a1a1;
-  --color-muted: #707070;
-  --color-line: #292929;
-  --font-display: var(--font-space), ui-sans-serif, system-ui, sans-serif;
+  --color-bg: #ffffff;
+  --color-bg-2: #f5f5f4;
+  --color-bg-3: #ffffff;
+  --color-fg: #0a0a0a;
+  --color-fg-2: #5c5c5c;
+  --color-muted: #8a8a8a;
+  --color-line: #e6e6e4;
+  --color-accent: #ff5a1f;
+  --font-display: var(--font-tight), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-cormorant), Georgia, serif;
 }
 
-html { background: #090909; }
+html { background: #ffffff; }
 body {
   background: var(--color-bg);
   color: var(--color-fg);
@@ -21,8 +22,8 @@ body {
   -webkit-font-smoothing: antialiased;
   overflow-x: clip;
 }
-::selection { background: #fff; color: #090909; }
-:focus-visible { outline: 1px solid #fff; outline-offset: 4px; }
+::selection { background: #0a0a0a; color: #ffffff; }
+:focus-visible { outline: 2px solid #0a0a0a; outline-offset: 4px; }
 
 @utility container-x {
   margin-inline: auto;
@@ -38,12 +39,12 @@ body {
   text-transform: uppercase;
   color: var(--color-muted);
 }
+/* Large, tight, sentence-case grotesque headline (like the reference) */
 @utility h-display {
   font-family: var(--font-display);
   font-weight: 500;
-  line-height: 0.95;
-  letter-spacing: -0.035em;
-  text-transform: uppercase;
+  line-height: 1.02;
+  letter-spacing: -0.045em;
   overflow-wrap: break-word;
 }
 
